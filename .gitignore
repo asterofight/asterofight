@@ -1,0 +1,6 @@
+/.idea/
+/node_modules/
+/release/
+/build.cmd
+/*prod.*
+/app.*

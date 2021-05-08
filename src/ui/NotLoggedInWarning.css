@@ -1,0 +1,17 @@
+.notLoggedInWarning {
+    width: 400px;
+    max-width: 100%;
+    background-color: rgba(0, 0, 0, 1);
+    border: 1px solid gray;
+    padding: 20px;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.notLoggedInWarning h2 {
+    font-weight: 300;
+    font-size: 20px;
+    color: white;
+}

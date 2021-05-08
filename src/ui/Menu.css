@@ -1,0 +1,33 @@
+.menu {
+    position: absolute;
+    top: 0;
+    left: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    border: 1px solid gray;
+    padding: 10px;
+}
+
+.menu .icon {
+    font-size: 24px;
+    border: 0;
+    line-height: 1;
+    background-color: #444;
+    padding: 10px;
+}
+
+/* .menu h2 {
+    margin: 0 0 20px 0;
+} */
+
+.menu .menuitem {
+    display: block;
+    width: 100%;
+    margin: 0;
+    background-color: transparent;
+    border: 0;
+    text-align: left;
+}
+
+.menu .menuitem:hover {
+    background-color: #005566;
+}

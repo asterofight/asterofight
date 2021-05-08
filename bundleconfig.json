@@ -1,0 +1,11 @@
+[
+    {
+        "outputFileName": "app.css",
+        "inputFiles": [
+            "src/**/*.css"
+        ],
+        "minify": {
+            "enabled": false
+        }
+    }
+]

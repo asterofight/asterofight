@@ -1,0 +1,37 @@
+.shipSelection {
+    max-width: 100%;
+    padding: 30px;
+    background-color: rgba(0, 0, 0, 1);
+    border: 1px solid gray;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.shipSelection .shipTypes {
+    display: flex;
+}
+
+.shipSelection .shipTypes .shipCard {
+    background-color: transparent;
+    border: 0;
+    padding: 10px;
+}
+
+.shipSelection .shipTypes .shipCard.locked {
+    color: red;
+}
+
+.shipSelection .shipTypes .shipCard.active {
+    border: 1px solid blue;
+}
+
+.shipSelection .shipTypes .shipCard:hover:not(:disabled) {
+    background-color: #444;
+}
+
+.shipSelection .shipTypes .shipCard img {
+    width: 128px;
+    max-width: 10vw;
+}

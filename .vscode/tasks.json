@@ -1,0 +1,33 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Watch TSC",
+			"type": "typescript",
+			"tsconfig": "tsconfig.json",
+			"option": "watch",
+			"problemMatcher": [
+				"$tsc-watch"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Watch CSS",
+			"type": "process",
+			"command": "tools/bundler/BundlerMinifierConsole.exe",
+			"args": [
+				"watch"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Watch TSC and CSS",
+			"dependsOn": [
+				"Watch TSC",
+				"Watch CSS"
+			],
+			"group": "build",
+			"problemMatcher": []
+		}
+	]
+}

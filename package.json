@@ -1,0 +1,16 @@
+{
+  "name": "asterofightclient",
+  "version": "2.1.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {},
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "babylonjs": "^4.2.0",
+    "babylonjs-loaders": "^4.2.0",
+    "pixi.js": "^5.3.9",
+    "preact": "^10.5.13"
+  }
+}
