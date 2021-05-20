@@ -1,4 +1,7 @@
-﻿namespace A
+﻿/// <reference path="serverTime.ts"/>
+
+
+namespace A
 {
 
 	export class ServerMotion

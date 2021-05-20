@@ -20,7 +20,7 @@ namespace A
 							<button key={ x } type="button" class={ "shipCard " + ( x === currentShipType ? "active":"available" ) }
 									onClick={ e => this.onClick( x ) } disabled={ x === currentShipType }
 									title={ x === currentShipType ? "You are on this": "Click to switch to " + x }>
-								<img src={ assetMgr.getSrc( x ) }/>
+								{/* <img src={ assetMgr.getSrc( x ) }/> */}
 								<p>{ x }</p>
 							</button> ) }
 					</div>

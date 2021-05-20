@@ -1,6 +1,6 @@
 [
     {
-        "outputFileName": "app.css",
+        "outputFileName": "dist/app.css",
         "inputFiles": [
             "src/**/*.css"
         ],

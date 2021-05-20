@@ -38,6 +38,12 @@ namespace A
 		//packetTicks = 0;
 		lastKnownControlledObjectId = 0;
 
+		constructor()
+		{
+			renderer.onRender.add( () => this.onDraw() );
+		}
+
+
 		private getOrCreateObject<T>( list: T[], id: number, factory: () => T )
 		{
 			let obj = list.find( x => ( x as any ).id === id );
@@ -93,7 +99,7 @@ namespace A
 			for ( let obj of this.asteroids )
 				if ( obj.lastSeenPacketId !== packet.id )
 					obj.destroy();
-			this.asteroids = this.asteroids.filter( obj => obj.lastSeenPacketId === packet.id );
+			this.asteroids.removeAll( obj => obj.lastSeenPacketId !== packet.id );
 
 			//////////////////////// CapturePoints ////////////////////////
 			for ( let od of packet.capturePoints )
@@ -169,10 +175,15 @@ namespace A
 		{
 			serverTime.onDraw();
 
+			for ( let obj of this.asteroids )
+			{
+				obj.render();
+			}
+
+
 			for ( let obj of this.missiles )
 			{
-				let p = obj.serverMotion!.getPositionAt( serverTime.time );
-				obj.renderPosition = obj.clientMotion!.step( 1 / 60, obj.pid!.step( p.sub( obj.clientMotion!.position ), 1 / 60 ) );
+				obj.render();
 				if ( this.controlledObject === obj )
 					this.setVisibleAreaCenter( obj.renderPosition );
 			}
@@ -214,7 +225,7 @@ namespace A
 						this.particleSystems.push( new ParticleSystem() );
 					if ( this.inputAcceleration.x !== 0 || this.inputAcceleration.y !== 0 )
 					{
-						let a = new Vector2( renderer.mirrored ? this.inputAcceleration.x : -this.inputAcceleration.x, -this.inputAcceleration.y );
+						let a = new Vector2( -this.inputAcceleration.x, -this.inputAcceleration.y );
 						this.particleSystems[ 0 ].emitterV = a.mul( 10 ).add( obj.clientMotion!.velocity );
 						this.particleSystems[ 0 ].emitterP = obj.renderPosition;//.add( a );
 						this.particleSystems[ 0 ].emitting = true;
@@ -222,14 +233,20 @@ namespace A
 					else
 						this.particleSystems[ 0 ].emitting = false;
 				}
+				obj.render();
 			}
 
 			for ( let obj of this.movingEffects )
 			{
 				let p = obj.serverMotion!.getPositionAt( serverTime.time );
 				obj.renderPosition = obj.clientMotion!.step( 1 / 60, obj.pid!.step( p.sub( obj.clientMotion!.position ), 1 / 60 ) );
+				obj.render();
 			}
 
+			for ( let obj of this.effects )
+			{
+				obj.render();
+			}
 
 		}
 
@@ -252,4 +269,5 @@ namespace A
 		}
 
 	}
+	export var game: Game = new Game();
 }

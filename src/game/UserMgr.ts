@@ -41,4 +41,5 @@ namespace A
 			this.upgrades!.find( x => x.id === id ).rank--;
 		}
 	}
+	export var userMgr = new UserMgr();
 }

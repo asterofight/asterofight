@@ -49,4 +49,5 @@ namespace A
         }
 
     }
+    export var debug = new DebugData();
 }

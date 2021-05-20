@@ -27,7 +27,10 @@
 				"Watch CSS"
 			],
 			"group": "build",
-			"problemMatcher": []
+			"problemMatcher": [],
+			"runOptions": {
+				"runOn": "folderOpen"
+			}
 		}
 	]
 }

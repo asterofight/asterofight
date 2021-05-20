@@ -20,7 +20,7 @@ namespace A
         render()
         {
             let colors = [ "blue", "green", "yellow", "red", "lime", "orange", "purple" ];
-            let text = `${ renderer.pixiApp.renderer.width } x ${ renderer.pixiApp.renderer.height } => ${ renderer.pixiApp.screen.width } x ${ renderer.pixiApp.screen.height }; ${ Math.round( renderer.pixiApp.ticker.FPS ) } fps`;
+            let text = "";// `${ renderer.pixiApp.renderer.width } x ${ renderer.pixiApp.renderer.height } => ${ renderer.pixiApp.screen.width } x ${ renderer.pixiApp.screen.height }; ${ Math.round( renderer.pixiApp.ticker.FPS ) } fps`;
             return (
                 <div className="debug">
                     <p>{ text }</p>

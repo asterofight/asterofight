@@ -114,7 +114,7 @@ namespace A
 					window.clearTimeout( this.timer );
 					this.timer = 0;
 				}
-				gameConnector.Control( renderer.mirrored ? -this.aX : this.aX, this.aY );
+				//gameConnector.Control( renderer.mirrored ? -this.aX : this.aX, this.aY );
 			}
 			else if ( !this.timer )
 				this.timer = window.setTimeout( () =>
@@ -165,8 +165,8 @@ namespace A
 		{
 			if ( e.button === 0 )
 			{
-				let pos = renderer.getGameCoords( e.clientX, e.clientY );
-				gameConnector.Use( pos.x, pos.y, 1 );
+				// let pos = renderer.getGameCoords( e.clientX, e.clientY );
+				// gameConnector.Use( pos.x, pos.y, 1 );
 			}
 			else if ( e.button === 1 )
 			{
@@ -182,8 +182,8 @@ namespace A
 			else if ( e.button === 2 )
 			{
 				e.preventDefault();
-				let pos = renderer.getGameCoords( e.clientX, e.clientY );
-				gameConnector.Use( pos.x, pos.y, 2 );
+				// let pos = renderer.getGameCoords( e.clientX, e.clientY );
+				// gameConnector.Use( pos.x, pos.y, 2 );
 			}
 		}
 

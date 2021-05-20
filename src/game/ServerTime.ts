@@ -1,4 +1,5 @@
-﻿namespace A
+﻿/// <reference path="debugData.ts"/>
+namespace A
 {
 
 	export class ServerTime
@@ -60,4 +61,5 @@
 
 	}
 
+	export var serverTime = new ServerTime();
 }

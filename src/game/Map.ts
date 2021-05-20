@@ -1,3 +1,4 @@
+/// <reference path="Rectangle.ts"/>
 /// <reference path="SpacePartitioning.ts"/>
 
 

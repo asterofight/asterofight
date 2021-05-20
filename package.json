@@ -10,7 +10,7 @@
   "dependencies": {
     "babylonjs": "^4.2.0",
     "babylonjs-loaders": "^4.2.0",
-    "pixi.js": "^5.3.9",
     "preact": "^10.5.13"
-  }
+  },
+  "devDependencies": {}
 }

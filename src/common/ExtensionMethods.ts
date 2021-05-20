@@ -29,7 +29,7 @@ interface Array<T>
 	*/
 	pushShift( value: T, maxLength: number ): T;
 	/**
-	* Returns the first element in array that matches the search criteria or undefined if no such element were found.
+	* Removes all elements that match the search criteria. Returns the number of elements removed.
 	* @param callbackfn The search criteria. Return true if element is found.
 	*/
 	removeAll( callbackfn: ( value: T, index: number, array: T[] ) => boolean, thisArg?: any );
@@ -165,7 +165,7 @@ if ( !Array.prototype["removeAll"] )
 	{
 		if ( this === null )
 		{
-			throw new TypeError( 'Array.prototype.find called on null or undefined' );
+			throw new TypeError( 'Array.prototype.removeAll called on null or undefined' );
 		}
 		if ( typeof predicate !== 'function' )
 		{
@@ -182,6 +182,7 @@ if ( !Array.prototype["removeAll"] )
 			if ( predicate.call( thisArg, value, i, list ) )
 				this.splice( i, 1 );
 		}
+		return length - list.length;
 	};
 }
 

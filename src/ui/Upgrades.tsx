@@ -67,7 +67,7 @@ namespace A
 						{ columns.map( col =>
 							<div class="unitType">
 								<div class="header">
-									<img src={ assetMgr.getSrc( col.unitType ) }/>
+									{/* <img src={ assetMgr.getSrc( col.unitType ) }/> */}
 									<h2>{ col.unitType }</h2>
 								</div>
 								{ col.rows.map( x =>

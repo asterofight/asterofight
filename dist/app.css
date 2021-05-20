@@ -1,0 +1,646 @@
+.checkbox {
+    cursor: pointer;
+}
+
+.checkbox span {
+    display: inline-block;
+    margin-left: 36px;
+}
+
+.checkbox input {
+    margin: 0;
+    cursor: pointer;
+    position: absolute;
+}
+
+.checkbox input:before {
+    content: "";
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    border: 1px solid #888;
+    background-color: black;
+}
+
+.checkbox input:hover:before {
+    background: #333;
+}
+
+.checkbox input:focus:before {
+    border-color: white;
+}
+
+.checkbox input:disabled {
+    color: #b8b8b8;
+    cursor: auto;
+}
+
+.checkbox input:disabled:before {
+    background: #ddd;
+}
+
+.checkbox input:checked:after {
+    content: "✔";
+    position: absolute;
+    font-size: 17px;
+    left: 7px;
+    top: 0px;
+}
+.switch {
+    position: relative;
+    cursor: pointer;
+    text-align: left;
+    min-height: 30px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    margin: 0;
+}
+
+.switch .slider {
+    position: absolute;
+    width: 50px;
+    height: 100%;
+    background-color: #555;
+    transition: .25s;
+    border-radius: 1em;
+}
+
+.switch .slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    top: 2px;
+    left: 2px;
+    background-color: #eee;
+    transition: .25s;
+    border-radius: 50%;
+}
+
+.switch input:focus+.slider:before {
+    background-color: #fff;
+}
+
+.switch input:checked+.slider {
+    background-color: #08a;
+}
+
+.switch input:checked+.slider:before {
+    transform: translateX(20px);
+}
+
+.switch .label {
+    margin: 2px 0 0 60px;
+    display: inline-block;
+}
+.text-input {
+    position: relative;
+    padding: 12px 0;
+}
+
+.text-input input {
+    width: 100%;
+    padding: 6px 6px;
+    border: 0;
+    outline: none;
+    background-color: transparent;
+}
+
+.text-input label {
+    position: absolute;
+    color: lightgray;
+    font-style: italic;
+    left: 6px;
+    top: 18px;
+    pointer-events: none;
+    transition: all 0.15s;
+}
+
+.text-input label.subsided {
+    left: 0;
+    top: 0;
+    font-size: 9pt;
+    transition: all 0.15s;
+    color: gray;
+}
+
+.text-input .focus-indicator {
+    position: absolute;
+    bottom: 12px;
+    width: 100%;
+    border: solid gray;
+    border-width: 0 0 1px 0;
+}
+
+.text-input input:focus+.focus-indicator {
+    border-color: white;
+    border-color: var( --focus-indicator-color, white);
+    border-width: 0 0 2px 0;
+}
+body {
+  margin: 0;
+  font-family: 'Segoe UI', 'Gill Sans', 'Gill Sans MT', 'Trebuchet MS', sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #eee;
+  user-select: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+input, button {
+  font: inherit;
+  line-height: inherit;
+  color: inherit;
+}
+
+html, body, canvas, main {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+}
+
+canvas, main {
+  position: absolute;
+}
+
+main {
+  cursor: crosshair;
+}
+
+main>* {
+  cursor: default;
+}
+
+h1 {
+  font-size: 40px;
+  font-weight: 300;
+  text-align: center;
+}
+
+h2 {
+  font-size: 18px;
+  font-weight: 400;
+}
+
+p {
+  margin: 0;
+}
+
+input {
+  background-color: transparent;
+  border: 1px solid gray;
+  border-radius: 2px;
+  padding: 5px 12px;
+  outline: 0;
+}
+
+input:focus {
+  border-color: white;
+}
+
+button {
+  padding: 7px 20px;
+  border: 1px solid #00A1C9;
+  border-radius: 2px;
+  background-color: #00414F;
+  font-weight: 600;
+  cursor: pointer;
+  outline: 0;
+}
+
+button:hover {
+  background-color: #005566;
+}
+
+button:active {
+  background-color: #003344;
+}
+
+button:focus {
+  border-color: white;
+}
+
+a {
+  color: #00A1C9;
+}
+
+
+.chat {
+    
+    max-width: 100%;
+    max-height: 30vh;
+    width: 500px;
+    height: 300px;
+    background-color: rgba(0, 0, 0, 0.3);
+    position: absolute;
+    bottom: 0;
+    overflow: hidden;
+}
+
+.chat .messages {
+    position: absolute;
+    bottom: 40px;
+    left: 10px;
+    right: 10px;
+}
+
+.chat p {
+    line-height: 1.1;
+    margin: 2px 0;
+}
+
+.chat span.time {
+    color: #aa9;
+    padding: 0 8px 0 0;
+    border: 1px solid gray;
+    border-width: 0 1px 0 0;
+}
+
+.chat span.from {
+    padding: 0 0 0 8px;
+}
+
+.chat span.text {
+    padding: 0 8px;
+}
+
+.chat .game {
+    color: #fff;
+}
+
+.chat .team {
+    color: #4c8;
+}
+
+.chat .whisper {
+    color: #d8d;
+}
+
+.chat .fromServer {
+    color: #ccc;
+}
+
+.chat .server {
+    color: #9df;
+}
+
+.chat input {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    border-radius: 0;
+    border-width: 1px 0 0 0;
+    width: 100%;
+}
+.debug {
+    display: inline-block;
+    position: absolute;
+    right: 0;
+    font-size: 13px;
+    overflow: hidden;
+    padding: 10px;
+    border: 1px solid black;
+    background-color: rgba( 0, 0, 0, 0.5);
+}
+
+.debug .chart {
+    margin: 6px;
+}
+
+.debug .chart .header {
+    display: flex;
+    justify-content: space-between;
+}
+.joystick {
+    position: fixed;
+    width: 100px;
+    height: 100px;
+    transform: translate(-50%, -50%);
+    border-radius: 50px;
+    border: 1px solid gray;
+}
+
+.joystick>div {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    transform: translate(-50%, -50%);
+    border-radius: 25px;
+    border: 1px solid #90c5ff;
+    background-color: rgba(144, 197, 255, 0.1);
+}
+.login {
+    position: absolute;
+    left: 50%;
+    top: 15%;
+    width: 360px;
+    transform: translateX(-50%);
+    background-color: rgba(0, 0, 0, 0.7);
+    border: 1px solid gray;
+    text-align: center;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+@media (max-height: 680px) {
+    .login {
+        top: 0;
+        bottom: 0;
+        border-top: 0;
+        border-bottom: 0;
+    }
+}
+
+.login h1 {
+    margin: 0 0 20px 0;
+}
+
+.login button {
+    display: block;
+    margin: 15px auto;
+}
+
+.login a {
+    margin: 0 8px;
+    color: #00CBFF;
+}
+
+.login input[type="text"], .login input[type="password"], .login .checkbox, .login .switch {
+    text-align: left;
+    margin: 8px 0;
+}
+
+.login .fields {
+    display: flex;
+    flex-direction: column;
+}
+
+.login .error {
+    color: red;
+}
+.menu {
+    position: absolute;
+    top: 0;
+    left: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    border: 1px solid gray;
+    padding: 10px;
+}
+
+.menu .icon {
+    font-size: 24px;
+    border: 0;
+    line-height: 1;
+    background-color: #444;
+    padding: 10px;
+}
+
+/* .menu h2 {
+    margin: 0 0 20px 0;
+} */
+
+.menu .menuitem {
+    display: block;
+    width: 100%;
+    margin: 0;
+    background-color: transparent;
+    border: 0;
+    text-align: left;
+}
+
+.menu .menuitem:hover {
+    background-color: #005566;
+}
+.notLoggedInWarning {
+    width: 400px;
+    max-width: 100%;
+    background-color: rgba(0, 0, 0, 1);
+    border: 1px solid gray;
+    padding: 20px;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.notLoggedInWarning h2 {
+    font-weight: 300;
+    font-size: 20px;
+    color: white;
+}
+.respawnTimer {
+    padding: 30px;
+    background-color: rgba( 0, 0, 0, 0.5);
+    border: 1px solid gray;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+
+.respawnTimer.visible {
+    display: flex;
+}
+
+.respawnTimer>div {
+    text-align: center;
+    line-height: 1;
+}
+
+.respawnTimer .timer {
+    font-size: 40px;
+    font-weight: 600;
+    margin: 20px;
+}
+.shipSelection {
+    max-width: 100%;
+    padding: 30px;
+    background-color: rgba(0, 0, 0, 1);
+    border: 1px solid gray;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.shipSelection .shipTypes {
+    display: flex;
+}
+
+.shipSelection .shipTypes .shipCard {
+    background-color: transparent;
+    border: 0;
+    padding: 10px;
+}
+
+.shipSelection .shipTypes .shipCard.locked {
+    color: red;
+}
+
+.shipSelection .shipTypes .shipCard.active {
+    border: 1px solid blue;
+}
+
+.shipSelection .shipTypes .shipCard:hover:not(:disabled) {
+    background-color: #444;
+}
+
+.shipSelection .shipTypes .shipCard img {
+    width: 128px;
+    max-width: 10vw;
+}
+.stats {
+    display: inline-block;
+    line-height: 1.1;
+    font-size: 13px;
+    overflow: hidden;
+    padding: 10px;
+    border: 1px solid black;
+    background-color: rgba( 0, 0, 0, 0.5);
+}
+
+.stats table {
+    color: white;
+}
+
+.stats table td, .stats table th {
+    padding: 2px 10px;
+    text-align: center;
+}
+
+.stats table thead {
+    font-weight: 600;
+}
+
+/*.stats table td:nth-child(2) {
+                font-weight: 600;
+            }*/
+
+.stats .self {
+    color: white;
+}
+
+.stats .homeTeam {
+    color: #c6eaff;
+}
+
+.stats .enemyTeam {
+    color: #ff6857;
+}
+.upgrades {
+    max-width: 100%;
+    background-color: rgba(0, 0, 0, 1);
+    border: 1px solid gray;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.upgrades .credit {
+    margin: 6px 20px;
+}
+
+
+.upgrades .unitTypesContainer {
+    display: flex;
+}
+
+.upgrades .unitTypesContainer .unitType {
+    background-color: transparent;
+    border: 0;
+    padding: 0 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.upgrades .unitTypesContainer .unitType .header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.upgrades .unitTypesContainer .unitType .header img {
+    width: 96px;
+}
+
+.upgrades .unitTypesContainer .unitType .header h2 {
+    margin: 0;
+    font-weight: 300;
+}
+
+.upgrades .unitTypesContainer .unitType .row {
+    display: flex;
+}
+
+.upgrades .upgradeCard {
+    position: relative;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    border:0;
+    border-radius: 0;
+    background-color: transparent;
+}
+
+.upgrades .upgradeCard.available:hover {
+    background-color: #444;
+}
+.upgrades .upgradeCard.active:hover {
+    background-color: #444;
+}
+
+.upgrades .upgradeCard > div {
+    width: 64px;
+    height: 64px;
+    border: 1px solid #444;
+}
+
+.upgrades .upgradeCard.active > div {
+    border-color: lime;
+}
+
+.upgrades .upgradeCard.available > div {
+    border-color: white;
+}
+
+.upgrades .upgradeCard > p {
+    line-height: 1;
+    margin: 0;
+    color: #444;
+}
+.upgrades .upgradeCard.active > p {
+    color: lime;
+}
+.upgrades .upgradeCard.available > p {
+    color: white;
+}
+
+
+.upgrades .upgradeCard> div ~ .tooltip {
+    position: absolute;
+    opacity: 0;
+    display: inline-block;
+    padding: 6px;
+    border: 1px solid pink;
+}
+
+.upgrades .upgradeCard > div:hover ~ .tooltip {
+    opacity: 1;
+}

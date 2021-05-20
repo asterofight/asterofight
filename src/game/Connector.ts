@@ -238,4 +238,5 @@ namespace A
 
 	}
 
+	export var gameConnector = new Connector();
 }
