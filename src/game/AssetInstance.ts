@@ -18,9 +18,17 @@ namespace A
         onAssetLoaded()
         {
             if ( this.asset.canBeInstanced )
-                this.root = ( this.asset.container.meshes[ 0 ] as BABYLON.Mesh ).createInstance( "" );
+                this.root = ( this.asset.container!.meshes[ 0 ] as BABYLON.Mesh ).createInstance( "" );
             else
-                this.entries = this.asset.container.instantiateModelsToScene();
+            {
+                this.entries = this.asset.container!.instantiateModelsToScene();
+                this.root = this.entries.rootNodes[ 0 ];
+                this.root.rotationQuaternion = null;
+                let ani = new BABYLON.Animation( "", "rotation.y", .01, BABYLON.Animation.ANIMATIONTYPE_FLOAT, BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE );
+                ani.setKeys( [ { frame: 0, value: 0 }, { frame: 1, value: 2 * Math.PI } ] );
+                this.root.animations.push( ani );
+                renderer.scene.beginAnimation( this.root, 0, 1, true );
+            }
         }
 
         setPos( x: number, y: number, z: number = 0, x2?: number, y2?: number, z2?: number )
@@ -40,10 +48,10 @@ namespace A
 
         destroy()
         {
-            if ( this.asset.canBeInstanced )
-                this.root?.dispose();
-            else
-                this.asset.container.removeAllFromScene();
+            if ( this.root )
+                this.root.dispose();
+            if ( this.entries )
+                this.asset.container!.removeAllFromScene();
             this.asset.destroyInstance( this );
         }
     }

@@ -6,7 +6,7 @@ namespace A
     {
         componentDidMount()
         {
-            gameConnector.addEventListener( "packet", p =>
+            connector.packetEvent.add( p =>
             {
                 this.forceUpdate();
             }, this );
@@ -14,13 +14,13 @@ namespace A
 
         componentWillUnmount()
         {
-            gameConnector.removeAllEventListener( this );
+            connector.packetEvent.removeAll( this );
         }
 
         render()
         {
             let colors = [ "blue", "green", "yellow", "red", "lime", "orange", "purple" ];
-            let text = "";// `${ renderer.pixiApp.renderer.width } x ${ renderer.pixiApp.renderer.height } => ${ renderer.pixiApp.screen.width } x ${ renderer.pixiApp.screen.height }; ${ Math.round( renderer.pixiApp.ticker.FPS ) } fps`;
+            let text = `${ renderer.width }x${ renderer.height } (${ document.body.clientWidth }x${ document.body.clientHeight }) @${ Math.round( renderer.debugNumbers[ "FPS" ] ) } fps; ${ Math.round( renderer.debugNumbers[ "Frame Time" ] )} ms`;
             return (
                 <div className="debug">
                     <p>{ text }</p>

@@ -125,30 +125,6 @@ if (typeof Number.prototype["padLeft"] !== 'function')
     };
 var A;
 (function (A) {
-    class EventProducer {
-        constructor() {
-            this.listeners = [];
-        }
-        addEventListener(type, listener, obj) {
-            this.listeners.push({ type, listener, obj });
-        }
-        removeEventListener(type, listener) {
-            this.listeners.splice(this.listeners.findIndex(x => x.type === type && x.listener === listener), 1);
-        }
-        removeAllEventListener(obj) {
-            if (!obj)
-                throw new Error("Must specify object");
-            this.listeners = this.listeners.filter(x => x.obj !== obj);
-        }
-        dispatch(type, ...args) {
-            for (let listener of this.listeners.filter(x => x.type === type))
-                listener.listener.call(listener.obj, ...args);
-        }
-    }
-    A.EventProducer = EventProducer;
-})(A || (A = {}));
-var A;
-(function (A) {
     class BitArray {
         constructor(bytes, length) {
             this.bytes = bytes;
@@ -488,6 +464,30 @@ var A;
     }
     A.Afcp3Reader = Afcp3Reader;
 })(A || (A = {}));
+var A;
+(function (A) {
+    class EventObject {
+        constructor() {
+            this.listeners = [];
+        }
+        add(callback, scope) {
+            this.listeners.push({ callback, scope });
+        }
+        remove(callback) {
+            this.listeners = this.listeners.filter(x => x.callback !== callback);
+        }
+        removeAll(scope) {
+            if (!scope)
+                throw new Error("Must specify object");
+            this.listeners = this.listeners.filter(x => x.scope !== scope);
+        }
+        raise(arg) {
+            for (let listener of this.listeners)
+                listener.callback.call(listener.scope, arg);
+        }
+    }
+    A.EventObject = EventObject;
+})(A || (A = {}));
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -517,14 +517,14 @@ var A;
         }
         buyUpgrade(id) {
             return __awaiter(this, void 0, void 0, function* () {
-                let credit = yield A.gameConnector.BuyUpgrade(id);
+                let credit = yield A.connector.BuyUpgrade(id);
                 this.user.currentCredit = credit;
                 this.upgrades.find(x => x.id === id).rank++;
             });
         }
         sellUpgrade(id) {
             return __awaiter(this, void 0, void 0, function* () {
-                let credit = yield A.gameConnector.SellUpgrade(id);
+                let credit = yield A.connector.SellUpgrade(id);
                 this.user.currentCredit = credit;
                 this.upgrades.find(x => x.id === id).rank--;
             });
@@ -535,11 +535,13 @@ var A;
 })(A || (A = {}));
 var A;
 (function (A) {
-    class Connector extends A.EventProducer {
+    class Connector {
         constructor() {
-            super();
-            this.address = `${document.location.protocol === "https:" ? "wss" : "ws"}://${document.location.port === "5500" ? "beta.asterofight.com" : document.location.hostname || "localhost"}/af/game/`;
+            this.address = `${document.location.protocol === "https:" ? "wss" : "ws"}://${document.location.port !== "80" && document.location.port !== "443" ? "beta.asterofight.com" : document.location.hostname || "localhost"}/af/game/`;
             this.protocol = "afcp";
+            this.packetEvent = new A.EventObject();
+            this.userEvent = new A.EventObject();
+            this.connectionEvent = new A.EventObject();
             this.lastPacketTime = 0;
             this.lastPacketId = 0;
             this.stringTable = [];
@@ -549,6 +551,9 @@ var A;
             this.lastCallId = 1;
             this.bytesReceivedHistory = [];
             this.connect();
+        }
+        test() {
+            return this.address;
         }
         connect() {
             this.webSocket = new WebSocket(this.address, this.protocol);
@@ -577,12 +582,12 @@ var A;
                 let packet = this.afcpReader.deserialize(new A.DataViewReader(new DataView(data), this.stringTable));
                 this.lastPacketId = packet.id;
                 A.game.onPacket(packet);
-                super.dispatch("packet", packet);
+                this.packetEvent.raise(packet);
             }
         }
         onOpen() {
             return __awaiter(this, void 0, void 0, function* () {
-                this.dispatch("connection", "connected");
+                this.connectionEvent.raise("connected");
                 this.stringTable = [""];
                 if (A.game.playerId)
                     this.AttachPlayer(A.game.playerId);
@@ -594,7 +599,7 @@ var A;
                             A.userMgr.user = ret;
                             if (A.userMgr.user.loginToken)
                                 localStorage["loginToken"] = A.userMgr.user.loginToken;
-                            this.dispatch("user");
+                            this.userEvent.raise();
                         }
                         else
                             localStorage.removeItem("loginToken");
@@ -603,7 +608,7 @@ var A;
             });
         }
         onClose() {
-            this.dispatch("connection", "disconnected");
+            this.connectionEvent.raise("disconnected");
             setTimeout(() => this.connect(), 5000);
         }
         Ack() {
@@ -619,7 +624,7 @@ var A;
                     A.userMgr.user = ret;
                     if (A.userMgr.user.loginToken)
                         localStorage["loginToken"] = A.userMgr.user.loginToken;
-                    this.dispatch("user");
+                    this.userEvent.raise();
                     return "";
                 }
                 return ret;
@@ -629,7 +634,7 @@ var A;
             localStorage.removeItem("loginToken");
             this.call("Logout", {});
             A.userMgr.user = undefined;
-            this.dispatch("user");
+            this.userEvent.raise();
         }
         CreatePlayer(name) {
             this.call("CreatePlayer", { name });
@@ -691,155 +696,7 @@ var A;
         }
     }
     A.Connector = Connector;
-    A.gameConnector = new Connector();
-})(A || (A = {}));
-var A;
-(function (A) {
-    class AssetRenderer {
-        constructor(canvas) {
-            this.canvas = canvas;
-            this.onRender = new BABYLON.Observable();
-            this.ready = false;
-            this.pixelCount = 0;
-            this.avgFrameTime = 0;
-            this.avgRenderTime = 0;
-            this.frameTimes = [];
-            this.drawCalls = 0;
-            this.droppedFrames = 0;
-            this.loadCount = 0;
-            this.calcPixelCount = () => {
-                this.pixelCount = this.engine.getRenderWidth() * this.engine.getRenderHeight();
-            };
-            this.fpsFrames = 0;
-            this.fpsSecond = 0;
-            this.fps = 0;
-            this.lastFrameAt = 0;
-            this.frameIdx = 0;
-            this.render = () => {
-                let scene = this.engine.scenes[0];
-                this.onRender.notifyObservers(scene);
-                scene.render();
-            };
-            this.resize = () => {
-                var _a;
-                (_a = this.engine) === null || _a === void 0 ? void 0 : _a.resize();
-            };
-            this.engine = new BABYLON.Engine(canvas, true);
-            this.engine.setHardwareScalingLevel(1 / window.devicePixelRatio);
-            this.engine.onResizeObservable.add(this.calcPixelCount);
-            this.calcPixelCount();
-            window.addEventListener("resize", this.resize);
-            this.scene = new BABYLON.Scene(this.engine);
-            this.scene.clearColor = new BABYLON.Color4(.1, .1, .1, 1);
-            let cam = new BABYLON.ArcRotateCamera("Main", -Math.PI / 2, 1.2, 80, new BABYLON.Vector3(0, 0, 0), this.scene);
-            cam.minZ = 1;
-            cam.maxZ = 100;
-            cam.attachControl(this.canvas);
-            let ambient = new BABYLON.HemisphericLight("ambient", new BABYLON.Vector3(0, 1, 2), this.scene);
-            ambient.groundColor.set(0.2, 0.3, 0.2);
-            ambient.diffuse.set(.88, .93, 1);
-            ambient.direction.set(0, 0.9, 1.5);
-            ambient.intensity = 0.3;
-            let direct = new BABYLON.DirectionalLight("sun", new BABYLON.Vector3(0.8, -1, 0.2), this.scene);
-            direct.intensity = 4;
-            direct.diffuse.set(0.9, 0.95, 1);
-            direct.position = direct.direction.scale(-50);
-        }
-        start() {
-            this.engine.runRenderLoop(this.render);
-        }
-        stop() {
-            this.engine.stopRenderLoop();
-        }
-        get activeBones() {
-            return this.engine.scenes[0].getActiveBones();
-        }
-        get faceCount() {
-            return this.engine.scenes[0].getActiveIndices() / 3;
-        }
-    }
-    A.AssetRenderer = AssetRenderer;
-    A.renderer = new AssetRenderer(document.querySelector("canvas"));
-    window.addEventListener("load", () => A.renderer.start());
-})(A || (A = {}));
-var A;
-(function (A) {
-    class AssetObject {
-        constructor(name) {
-            this.name = name;
-            this.instances = [];
-            this.isLoaded = false;
-            this.canBeInstanced = false;
-            this.container = new BABYLON.AssetContainer(A.renderer.scene);
-            let mesh = name === "CapturePoint" ? BABYLON.MeshBuilder.CreateSphere("", { diameter: .01 }) :
-                name === "Fighter" ? BABYLON.MeshBuilder.CreateBox("", { size: 1 }) :
-                    BABYLON.MeshBuilder.CreateSphere("", { diameter: 1 });
-            this.container.meshes.push(mesh);
-            this.container.removeAllFromScene();
-            this.canBeInstanced = true;
-            this.isLoaded = true;
-        }
-        createInstance() {
-            let ret = new A.AssetInstance(this);
-            this.instances.push(ret);
-            return ret;
-        }
-        destroyInstance(instance) {
-            this.instances.splice(this.instances.indexOf(instance));
-        }
-    }
-    A.AssetObject = AssetObject;
-})(A || (A = {}));
-var A;
-(function (A) {
-    class AssetInstance {
-        constructor(asset) {
-            this.asset = asset;
-            if (asset.isLoaded)
-                this.onAssetLoaded();
-        }
-        onAssetLoaded() {
-            if (this.asset.canBeInstanced)
-                this.root = this.asset.container.meshes[0].createInstance("");
-            else
-                this.entries = this.asset.container.instantiateModelsToScene();
-        }
-        setPos(x, y, z = 0, x2, y2, z2) {
-            var _a;
-            (_a = this.root) === null || _a === void 0 ? void 0 : _a.position.set(x, y, z);
-        }
-        setUniformScale(x) {
-            var _a;
-            (_a = this.root) === null || _a === void 0 ? void 0 : _a.scaling.setAll(x);
-        }
-        setState(state) {
-        }
-        destroy() {
-            var _a;
-            if (this.asset.canBeInstanced)
-                (_a = this.root) === null || _a === void 0 ? void 0 : _a.dispose();
-            else
-                this.asset.container.removeAllFromScene();
-            this.asset.destroyInstance(this);
-        }
-    }
-    A.AssetInstance = AssetInstance;
-})(A || (A = {}));
-var A;
-(function (A) {
-    class AssetMgr {
-        constructor() {
-            this.assets = {};
-        }
-        createInstance(name) {
-            let asset = this.assets[name];
-            if (!asset)
-                this.assets[name] = asset = new A.AssetObject(name);
-            return asset.createInstance();
-        }
-    }
-    A.AssetMgr = AssetMgr;
-    A.assetMgr = new AssetMgr();
+    A.connector = new Connector();
 })(A || (A = {}));
 var A;
 (function (A) {
@@ -869,6 +726,215 @@ var A;
         static get zero() { return new Vector2(0, 0); }
     }
     A.Vector2 = Vector2;
+})(A || (A = {}));
+var A;
+(function (A) {
+    class Renderer {
+        constructor(canvas) {
+            this.canvas = canvas;
+            this.onRender = new BABYLON.Observable();
+            this.orientationRightToLeft = false;
+            this.orientationPortrait = false;
+            this.pixelCount = 0;
+            this.debugNumbers = {};
+            this.targetCamPos = new A.Vector2();
+            this.camDistance = 100;
+            this.calcPixelCount = () => {
+                this.pixelCount = this.engine.getRenderWidth() * this.engine.getRenderHeight();
+            };
+            this.render = () => {
+                let scene = this.engine.scenes[0];
+                this.onRender.notifyObservers(scene);
+                let dx = (this.targetCamPos.x - this.camera.position.x) * .1;
+                let dy = (this.targetCamPos.y - this.camera.position.y) * .1;
+                let x = this.camera.position.x + dx;
+                let y = this.camera.position.y + dy;
+                this.camera.setTarget(new BABYLON.Vector3(x, y, 0));
+                this.camera.position.set(x, y, -this.camDistance);
+                scene.render();
+                this.debugNumbers["FPS"] = this.engine.performanceMonitor.averageFPS;
+                this.debugNumbers["Frame Time"] = this.sceneInstrumentation.frameTimeCounter.current;
+            };
+            this.resize = () => {
+                if (this.engine)
+                    this.rearrange();
+            };
+            this.engine = new BABYLON.Engine(canvas, true);
+            this.engine.setHardwareScalingLevel(1 / window.devicePixelRatio);
+            this.engine.onResizeObservable.add(this.calcPixelCount);
+            this.calcPixelCount();
+            window.addEventListener("resize", this.resize);
+            this.scene = new BABYLON.Scene(this.engine);
+            this.scene.clearColor = new BABYLON.Color4(.01, .01, .01, 1);
+            this.sceneInstrumentation = new BABYLON.SceneInstrumentation(this.scene);
+            this.sceneInstrumentation.captureFrameTime = true;
+            this.camera = new BABYLON.TargetCamera("", new BABYLON.Vector3(0, 0, -this.camDistance), this.scene, true);
+            this.camera.minZ = this.camDistance - 20;
+            this.camera.maxZ = this.camDistance + 20;
+            let ambient = new BABYLON.HemisphericLight("ambient", new BABYLON.Vector3(0, 1, 2), this.scene);
+            ambient.groundColor.set(0.2, 0.3, 0.2);
+            ambient.diffuse.set(.88, .93, 1);
+            ambient.direction.set(0, 0.9, 1.5);
+            ambient.intensity = 0.1;
+            this.lightHemi = ambient;
+            let direct = new BABYLON.DirectionalLight("sun", new BABYLON.Vector3(0.8, -1, 1), this.scene);
+            direct.intensity = 2;
+            this.lightDirect = direct;
+        }
+        get width() {
+            return this.engine.getRenderWidth();
+        }
+        get height() {
+            return this.engine.getRenderHeight();
+        }
+        start() {
+            this.rearrange();
+            this.engine.runRenderLoop(this.render);
+        }
+        stop() {
+            this.engine.stopRenderLoop();
+        }
+        setTeam(rightToLeft) {
+            if (this.orientationRightToLeft !== rightToLeft) {
+                this.orientationRightToLeft = rightToLeft;
+                this.rearrange();
+            }
+        }
+        setCameraTarget(gamePos) {
+            this.targetCamPos = gamePos;
+        }
+        getGameCoords(clientX, clientY) {
+            let picked = this.scene.pick(clientX, clientY);
+            if (picked === null || picked === void 0 ? void 0 : picked.ray) {
+                let ip = picked.ray.intersectsPlane(new BABYLON.Plane(0, 0, 1, 0));
+                if (ip)
+                    return new A.Vector2(picked.ray.origin.x + picked.ray.direction.x * ip, picked.ray.origin.y + picked.ray.direction.y * ip);
+            }
+            return new A.Vector2();
+        }
+        rearrange() {
+            this.engine.resize();
+            let aspectRatio = this.engine.getRenderWidth() / this.engine.getRenderHeight();
+            this.orientationPortrait = aspectRatio < 1;
+            if (!this.orientationPortrait) {
+                let h = Math.min(40 / aspectRatio, 22.5);
+                this.camera.fovMode = BABYLON.Camera.FOVMODE_VERTICAL_FIXED;
+                this.camera.fov = Math.atan(h / this.camDistance) * 2;
+                this.camera.upVector = this.orientationRightToLeft ? BABYLON.Vector3.Down() : BABYLON.Vector3.Up();
+            }
+            else {
+                let h = Math.min(45 / 2 * aspectRatio / 9 * 16, 22.5);
+                this.camera.fovMode = BABYLON.Camera.FOVMODE_HORIZONTAL_FIXED;
+                this.camera.fov = Math.atan(h / this.camDistance) * 2;
+                this.camera.upVector = this.orientationRightToLeft ? BABYLON.Vector3.Left() : BABYLON.Vector3.Right();
+            }
+            let lightDir = BABYLON.Vector3.TransformCoordinates(this.camera.upVector.negate(), BABYLON.Matrix.RotationAxis(BABYLON.Axis.Z, Math.PI / 4)).add(BABYLON.Axis.Z);
+            this.lightHemi.direction = lightDir;
+            this.lightDirect.direction = lightDir;
+        }
+    }
+    A.Renderer = Renderer;
+    A.renderer = new Renderer(document.querySelector("canvas"));
+    window.addEventListener("load", () => A.renderer.start());
+})(A || (A = {}));
+var A;
+(function (A) {
+    class AssetObject {
+        constructor(name) {
+            this.name = name;
+            this.instances = [];
+            this.isLoaded = false;
+            this.canBeInstanced = false;
+            if (name === "Asteroid")
+                this.load();
+            else {
+                this.container = new BABYLON.AssetContainer(A.renderer.scene);
+                let mesh = name === "CapturePoint" ? BABYLON.MeshBuilder.CreateSphere("", { diameter: .01 }) :
+                    name === "Fighter" ? BABYLON.MeshBuilder.CreateBox("", { size: 1 }) :
+                        BABYLON.MeshBuilder.CreateSphere("", { diameter: 1 });
+                this.container.meshes.push(mesh);
+                this.container.removeAllFromScene();
+                this.canBeInstanced = true;
+                this.isLoaded = true;
+            }
+        }
+        load() {
+            return __awaiter(this, void 0, void 0, function* () {
+                if (this.name === "Asteroid") {
+                    this.container = yield BABYLON.SceneLoader.LoadAssetContainerAsync("./assets/", "asteroid.glb", A.renderer.scene);
+                    this.isLoaded = true;
+                }
+                for (let i of this.instances)
+                    i.onAssetLoaded();
+            });
+        }
+        createInstance() {
+            let ret = new A.AssetInstance(this);
+            this.instances.push(ret);
+            return ret;
+        }
+        destroyInstance(instance) {
+            this.instances.splice(this.instances.indexOf(instance));
+        }
+    }
+    A.AssetObject = AssetObject;
+})(A || (A = {}));
+var A;
+(function (A) {
+    class AssetInstance {
+        constructor(asset) {
+            this.asset = asset;
+            if (asset.isLoaded)
+                this.onAssetLoaded();
+        }
+        onAssetLoaded() {
+            if (this.asset.canBeInstanced)
+                this.root = this.asset.container.meshes[0].createInstance("");
+            else {
+                this.entries = this.asset.container.instantiateModelsToScene();
+                this.root = this.entries.rootNodes[0];
+                this.root.rotationQuaternion = null;
+                let ani = new BABYLON.Animation("", "rotation.y", .01, BABYLON.Animation.ANIMATIONTYPE_FLOAT, BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE);
+                ani.setKeys([{ frame: 0, value: 0 }, { frame: 1, value: 2 * Math.PI }]);
+                this.root.animations.push(ani);
+                A.renderer.scene.beginAnimation(this.root, 0, 1, true);
+            }
+        }
+        setPos(x, y, z = 0, x2, y2, z2) {
+            var _a;
+            (_a = this.root) === null || _a === void 0 ? void 0 : _a.position.set(x, y, z);
+        }
+        setUniformScale(x) {
+            var _a;
+            (_a = this.root) === null || _a === void 0 ? void 0 : _a.scaling.setAll(x);
+        }
+        setState(state) {
+        }
+        destroy() {
+            if (this.root)
+                this.root.dispose();
+            if (this.entries)
+                this.asset.container.removeAllFromScene();
+            this.asset.destroyInstance(this);
+        }
+    }
+    A.AssetInstance = AssetInstance;
+})(A || (A = {}));
+var A;
+(function (A) {
+    class AssetMgr {
+        constructor() {
+            this.assets = {};
+        }
+        createInstance(name) {
+            let asset = this.assets[name];
+            if (!asset)
+                this.assets[name] = asset = new A.AssetObject(name);
+            return asset.createInstance();
+        }
+    }
+    A.AssetMgr = AssetMgr;
+    A.assetMgr = new AssetMgr();
 })(A || (A = {}));
 var A;
 (function (A) {
@@ -962,13 +1028,13 @@ var A;
                 if (now - this.lastMeasure > 1) {
                     this.lastMeasure = now;
                     let t0 = performance.now();
-                    yield A.gameConnector.Ack();
+                    yield A.connector.Ack();
                     let t1 = performance.now();
                     A.debug.updateChart("Ping", (t1 - t0), 0, 500, "ms");
                 }
             });
         }
-        onDraw() {
+        onRender() {
             let maxAdjustment = 0.0001;
             let adjustment = (this.targetDsct - this.currentDsct) * 0.001;
             this.currentDsct += Math.min(maxAdjustment, Math.max(-maxAdjustment, adjustment));
@@ -1160,6 +1226,9 @@ var A;
         constructor(od) {
             super(false, od.id, "Asteroid");
             this.m = 0;
+        }
+        render() {
+            this.ai.setPos(this.renderPosition.x, this.renderPosition.y);
         }
     }
     A.Asteroid = Asteroid;
@@ -1353,6 +1422,19 @@ var A;
                 t.energyBarIsDirty = true;
             }
         }
+        render() {
+            let p = this.serverMotion.getPositionAt(A.serverTime.time);
+            p = this.clientMotion.step(A.serverTime.renderDelta, this.pid.step(p.sub(this.clientMotion.position), A.serverTime.renderDelta));
+            for (let a of A.game.asteroids) {
+                let rr = this.r + a.r;
+                if (p.distS(a.renderPosition) < rr * rr) {
+                    p = p.sub(a.renderPosition).norm().mul(rr).add(a.renderPosition);
+                    break;
+                }
+            }
+            this.renderPosition = p;
+            this.ai.setPos(this.renderPosition.x, this.renderPosition.y);
+        }
         draw(resized) {
             for (let turret of this.turrets)
                 turret.draw(resized);
@@ -1411,7 +1493,7 @@ var A;
             this.inputAcceleration = new A.Vector2();
             this.packetId = 0;
             this.lastKnownControlledObjectId = 0;
-            A.renderer.onRender.add(() => this.onDraw());
+            A.renderer.onRender.add(() => this.onRender());
         }
         getOrCreateObject(list, id, factory) {
             let obj = list.find(x => x.id === id);
@@ -1430,11 +1512,13 @@ var A;
             this.visibleArea.h = data.viewSize.Y;
         }
         onPacket(packet) {
-            var _a, _b;
+            var _a, _b, _c, _d;
             this.packetId = packet.id;
             A.serverTime.onPacket(packet.serverTicks);
             if (packet.playerId !== undefined)
                 this.playerId = packet.playerId;
+            let ownTeam = (_b = (_a = this.player) === null || _a === void 0 ? void 0 : _a.team) !== null && _b !== void 0 ? _b : 1;
+            A.renderer.setTeam(ownTeam === 2);
             if (packet.players) {
                 for (let od of packet.players) {
                     let obj = this.players.find(x => x.id === od.id);
@@ -1445,7 +1529,7 @@ var A;
                 this.players = this.players.filter(obj => obj.lastSeenPacketId === packet.id);
             }
             this.player = this.players.find(x => x.id === this.playerId);
-            this.team = (_b = (_a = A.game.player) === null || _a === void 0 ? void 0 : _a.team) !== null && _b !== void 0 ? _b : 1;
+            this.team = (_d = (_c = A.game.player) === null || _c === void 0 ? void 0 : _c.team) !== null && _d !== void 0 ? _d : 1;
             if (packet.controlledObjId !== undefined)
                 this.lastKnownControlledObjectId = packet.controlledObjId;
             this.controlledObject = undefined;
@@ -1508,35 +1592,24 @@ var A;
             if (this.autoPilot)
                 this.autoPilotControl();
         }
-        onDraw() {
-            A.serverTime.onDraw();
+        onRender() {
+            A.serverTime.onRender();
+            let visibleAreaCenter = null;
             for (let obj of this.asteroids) {
                 obj.render();
             }
             for (let obj of this.missiles) {
                 obj.render();
                 if (this.controlledObject === obj)
-                    this.setVisibleAreaCenter(obj.renderPosition);
+                    visibleAreaCenter = obj.renderPosition;
             }
             for (let obj of this.spaceships) {
-                let p = obj.serverMotion.getPositionAt(A.serverTime.time);
-                p = obj.clientMotion.step(A.serverTime.renderDelta, obj.pid.step(p.sub(obj.clientMotion.position), A.serverTime.renderDelta));
-                for (let a of this.asteroids) {
-                    let rr = obj.r + a.r;
-                    if (p.distS(a.renderPosition) < rr * rr) {
-                        p = p.sub(a.renderPosition).norm().mul(rr).add(a.renderPosition);
-                        break;
-                    }
-                }
-                let moveDistance = p.sub(obj.renderPosition).len;
-                obj.renderPosition = p;
+                obj.render();
                 let playerTurret;
                 if (this.controlledObject === obj && this.player && (playerTurret = obj.turrets.find(x => x.playerId === this.player.id))) {
-                    this.player.serverPositionHistory.pushShift(p, 240);
+                    visibleAreaCenter = obj.renderPosition.add(playerTurret.pos);
+                    this.player.serverPositionHistory.pushShift(obj.renderPosition, 240);
                     this.player.renderPositionHistory.pushShift(obj.renderPosition, 240);
-                    A.debug.updateChart("Move Distance", moveDistance * 100, 0, 100, "u", 200);
-                    let pTurret = obj.renderPosition.add(playerTurret.pos);
-                    this.setVisibleAreaCenter(pTurret);
                     if (this.particleSystems.length === 0)
                         this.particleSystems.push(new A.ParticleSystem());
                     if (this.inputAcceleration.x !== 0 || this.inputAcceleration.y !== 0) {
@@ -1548,7 +1621,6 @@ var A;
                     else
                         this.particleSystems[0].emitting = false;
                 }
-                obj.render();
             }
             for (let obj of this.movingEffects) {
                 let p = obj.serverMotion.getPositionAt(A.serverTime.time);
@@ -1558,10 +1630,13 @@ var A;
             for (let obj of this.effects) {
                 obj.render();
             }
+            if (visibleAreaCenter)
+                this.setVisibleAreaCenter(visibleAreaCenter);
         }
         setVisibleAreaCenter(pos) {
             this.visibleArea.x = pos.x - this.visibleArea.w * 0.5;
             this.visibleArea.y = pos.y - this.visibleArea.h * 0.5;
+            A.renderer.setCameraTarget(pos);
         }
         autoPilotControl() {
             let obj = this.controlledObject;
@@ -1615,7 +1690,7 @@ var A;
 (function (A) {
     class ShipSelection extends A.PureComponent {
         onClick(type) {
-            A.gameConnector.SwitchSpaceship(type);
+            A.connector.SwitchSpaceship(type);
             this.props.onClose();
         }
         render() {
@@ -1699,7 +1774,7 @@ var A;
             this.state = { respawnIn: 0 };
         }
         componentDidMount() {
-            A.gameConnector.addEventListener("packet", p => {
+            A.connector.packetEvent.add(p => {
                 var _a, _b;
                 let respawnIn = ((_b = (_a = A.game.player) === null || _a === void 0 ? void 0 : _a.respawnIn) !== null && _b !== void 0 ? _b : 0) * A.ServerTime.serverTickInterval;
                 if (this.state.respawnIn !== respawnIn)
@@ -1707,7 +1782,7 @@ var A;
             }, this);
         }
         componentWillUnmount() {
-            A.gameConnector.removeAllEventListener(this);
+            A.connector.packetEvent.removeAll(this);
         }
         render() {
             return (preact.h("div", { className: "respawnTimer" + (this.state.respawnIn > 0.5 ? " visible" : "") },
@@ -1727,13 +1802,13 @@ var A;
             this.state = { list: [] };
         }
         componentDidMount() {
-            A.gameConnector.addEventListener("packet", p => {
+            A.connector.packetEvent.add(p => {
                 if (A.game.players && A.game.players.length > 0)
                     this.setState({ list: A.game.players.filter(x => !x.bot || this.props.showDetails) });
             }, this);
         }
         componentWillUnmount() {
-            A.gameConnector.removeAllEventListener(this);
+            A.connector.packetEvent.removeAll(this);
         }
         render() {
             let list = this.state.list.sort((a, b) => b.stats.scorePerHour - a.stats.scorePerHour || b.stats.score - a.stats.score ||
@@ -1832,16 +1907,16 @@ var A;
 (function (A) {
     class Debug extends A.PureComponent {
         componentDidMount() {
-            A.gameConnector.addEventListener("packet", p => {
+            A.connector.packetEvent.add(p => {
                 this.forceUpdate();
             }, this);
         }
         componentWillUnmount() {
-            A.gameConnector.removeAllEventListener(this);
+            A.connector.packetEvent.removeAll(this);
         }
         render() {
             let colors = ["blue", "green", "yellow", "red", "lime", "orange", "purple"];
-            let text = "";
+            let text = `${A.renderer.width}x${A.renderer.height} (${document.body.clientWidth}x${document.body.clientHeight}) @${Math.round(A.renderer.debugNumbers["FPS"])} fps; ${Math.round(A.renderer.debugNumbers["Frame Time"])} ms`;
             return (preact.h("div", { className: "debug" },
                 preact.h("p", null, text),
                 this.props.showDetails &&
@@ -1906,7 +1981,7 @@ var A;
                 if (this.state.text[0] === "/")
                     cmd = this.state.text.substr(1);
                 else
-                    A.gameConnector.SendChatMessage(0, this.state.text);
+                    A.connector.SendChatMessage(0, this.state.text);
             }
             this.closeInput(cmd);
         }
@@ -1915,7 +1990,7 @@ var A;
             this.props.onCloseInput(cmd);
         }
         componentDidMount() {
-            A.gameConnector.addEventListener("packet", p => {
+            A.connector.packetEvent.add(p => {
                 let messages = this.state.messages;
                 let dirty = false;
                 if (p.chatMessage) {
@@ -1933,7 +2008,7 @@ var A;
             }, this);
         }
         componentWillUnmount() {
-            A.gameConnector.removeAllEventListener(this);
+            A.connector.packetEvent.removeAll(this);
         }
         render() {
             return (preact.h("div", { className: "chat" },
@@ -2043,34 +2118,34 @@ var A;
             };
         }
         componentDidMount() {
-            A.gameConnector.addEventListener("user", () => this.setState({ loggedIn: A.userMgr.loggedIn }), this);
+            A.connector.userEvent.add(() => this.setState({ loggedIn: A.userMgr.loggedIn }), this);
         }
         componentWillUnmount() {
-            A.gameConnector.removeAllEventListener(this);
+            A.connector.userEvent.removeAll(this);
         }
         proModeChange(checked) {
             localStorage["proMode"] = checked.toString();
             if (!checked)
-                A.gameConnector.Logout();
+                A.connector.Logout();
             this.setState({ proMode: checked });
         }
         onJoin() {
             return __awaiter(this, void 0, void 0, function* () {
                 if (this.state.proMode && !this.state.loggedIn) {
                     if (this.state.register) {
-                        let ret = yield A.gameConnector.Register(this.state.userName, this.state.password, this.state.fullName);
+                        let ret = yield A.connector.Register(this.state.userName, this.state.password, this.state.fullName);
                         if (ret) {
                             this.setState({ errorMessage: ret });
                             return;
                         }
                     }
-                    let ret = yield A.gameConnector.Login(this.state.userName, this.state.password, this.state.stayLoggedIn);
+                    let ret = yield A.connector.Login(this.state.userName, this.state.password, this.state.stayLoggedIn);
                     if (ret) {
                         this.setState({ errorMessage: ret });
                         return;
                     }
                 }
-                A.gameConnector.CreatePlayer(this.state.name);
+                A.connector.CreatePlayer(this.state.name);
                 this.props.onLogin();
             });
         }
@@ -2219,12 +2294,12 @@ var A;
                     if (e.keyCode === 40 || e.keyCode === 83)
                         this.down = pressed;
                     this.aX = (this.left ? -1 : 0) + (this.right ? 1 : 0);
-                    this.aY = (this.up ? -1 : 0) + (this.down ? 1 : 0);
+                    this.aY = (this.up ? 1 : 0) + (this.down ? -1 : 0);
                     A.game.autoPilot = false;
                     this.control();
                 }
                 else if (pressed && e.keyCode === 81) {
-                    A.gameConnector.Use(0, 0, 3);
+                    A.connector.Use(0, 0, 3);
                 }
                 else if (pressed && e.keyCode === 32) {
                     A.game.autoPilot = true;
@@ -2240,6 +2315,13 @@ var A;
                     window.clearTimeout(this.timer);
                     this.timer = 0;
                 }
+                A.connector.Control(!A.renderer.orientationRightToLeft && !A.renderer.orientationPortrait ? this.aX :
+                    A.renderer.orientationRightToLeft && !A.renderer.orientationPortrait ? -this.aX :
+                        !A.renderer.orientationRightToLeft && A.renderer.orientationPortrait ? this.aY :
+                            -this.aY, !A.renderer.orientationRightToLeft && !A.renderer.orientationPortrait ? this.aY :
+                    A.renderer.orientationRightToLeft && !A.renderer.orientationPortrait ? -this.aY :
+                        !A.renderer.orientationRightToLeft && A.renderer.orientationPortrait ? -this.aX :
+                            this.aX);
             }
             else if (!this.timer)
                 this.timer = window.setTimeout(() => {
@@ -2276,6 +2358,8 @@ var A;
         }
         onMouseDown(e) {
             if (e.button === 0) {
+                let pos = A.renderer.getGameCoords(e.clientX, e.clientY);
+                A.connector.Use(pos.x, pos.y, 1);
             }
             else if (e.button === 1) {
                 this.setState({
@@ -2289,6 +2373,8 @@ var A;
             }
             else if (e.button === 2) {
                 e.preventDefault();
+                let pos = A.renderer.getGameCoords(e.clientX, e.clientY);
+                A.connector.Use(pos.x, pos.y, 2);
             }
         }
         onMouseMove(e) {
@@ -2304,7 +2390,7 @@ var A;
         processCommand(cmd) {
             this.setState({ chatInputVisible: false });
             if (cmd === "swap")
-                A.gameConnector.SwapTeam();
+                A.connector.SwapTeam();
             else if (cmd === "dbg")
                 this.setState({ debugVisible: !this.state.debugVisible });
         }
@@ -2327,5 +2413,6 @@ var A;
 var A;
 (function (A) {
     preact.render(preact.h(A.App, null), document.querySelector("main"));
+    console.log(A.connector.test());
 })(A || (A = {}));
 //# sourceMappingURL=app.js.map

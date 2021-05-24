@@ -1,23 +1,21 @@
 ﻿/// <reference path="../common/EventProducer.ts"/>
 /// <reference path="Afcp.ts"/>
+/// <reference path="EventObject.ts"/>
 /// <reference path="UserMgr.ts"/>
 
 namespace A
 {
 
-	interface ConnectorEvents
-	{
-		"packet": ( packet: Packet ) => void;
-		"user": () => void;
-		"connection": ( state: "connected" | "disconnected" ) => void;
-	}
-
-	export class Connector extends EventProducer<ConnectorEvents>
+	export class Connector
 	{
 
-		address = `${ document.location.protocol === "https:" ? "wss" : "ws" }://${ document.location.port === "5500" ? "beta.asterofight.com" : document.location.hostname || "localhost" }/af/game/`;
+		address = `${ document.location.protocol === "https:" ? "wss" : "ws" }://${ document.location.port !== "80" && document.location.port !== "443" ? "beta.asterofight.com" : document.location.hostname || "localhost" }/af/game/`;
 		webSocket: WebSocket | undefined;
 		protocol = "afcp";
+
+		readonly packetEvent = new EventObject<Packet>();
+		readonly userEvent = new EventObject<void>();
+		readonly connectionEvent = new EventObject<"connected" | "disconnected">();
 
 		private lastPacketTime: number = 0;
 		private lastPacketId = 0;
@@ -26,8 +24,12 @@ namespace A
 
 		constructor()
 		{
-			super();
 			this.connect();
+		}
+
+		test()
+		{
+			return this.address;
 		}
 
 		delayedPackets = [];
@@ -66,14 +68,14 @@ namespace A
 				let packet = this.afcpReader.deserialize( new DataViewReader( new DataView( data ), this.stringTable ) )
 				this.lastPacketId = packet.id;
 				game.onPacket( packet );
-				super.dispatch( "packet", packet );
+				this.packetEvent.raise( packet );
 			}
 		}
 
 		private async onOpen()
 		{
-			this.dispatch( "connection", "connected" );
-			this.stringTable = [ "" ];
+			this.connectionEvent.raise( "connected" );
+			this.stringTable = [""];
 			if ( game.playerId )
 				this.AttachPlayer( game.playerId );
 			else
@@ -87,7 +89,7 @@ namespace A
 						userMgr.user = ret;
 						if ( userMgr.user.loginToken )
 							localStorage[ "loginToken" ] = userMgr.user.loginToken;
-						this.dispatch( "user" );
+						this.userEvent.raise();
 					}
 					else
 						localStorage.removeItem( "loginToken" );
@@ -103,7 +105,7 @@ namespace A
 
 		private onClose()
 		{
-			this.dispatch( "connection", "disconnected" );
+			this.connectionEvent.raise( "disconnected");
 			setTimeout( () => this.connect(), 5000 );
 		}
 
@@ -126,7 +128,7 @@ namespace A
 				userMgr.user = ret;
 				if ( userMgr.user.loginToken )
 					localStorage[ "loginToken" ] = userMgr.user.loginToken;
-				this.dispatch( "user" );
+				this.userEvent.raise();
 				return "";
 			}
 			return ret;
@@ -137,7 +139,7 @@ namespace A
 			localStorage.removeItem( "loginToken" );
 			this.call( "Logout", {} );
 			userMgr.user = undefined;
-			this.dispatch( "user" );
+			this.userEvent.raise();
 		}
 
 		CreatePlayer( name: string )
@@ -238,5 +240,5 @@ namespace A
 
 	}
 
-	export var gameConnector = new Connector();
+	export var connector = new Connector();
 }

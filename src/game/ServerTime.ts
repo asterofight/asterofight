@@ -35,13 +35,13 @@ namespace A
 			{
 				this.lastMeasure = now;
 				let t0 = performance.now();
-				await gameConnector.Ack();
+				await connector.Ack();
 				let t1 = performance.now();
 				debug.updateChart( "Ping", ( t1 - t0 ), 0, 500, "ms" );
 			}
 		}
 
-		onDraw()
+		onRender()
 		{
 			let maxAdjustment = 0.0001;
 			let adjustment = ( this.targetDsct - this.currentDsct ) * 0.001;

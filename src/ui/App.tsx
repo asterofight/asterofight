@@ -84,13 +84,13 @@ namespace A
 					if ( e.keyCode === 40 || e.keyCode === 83 )
 						this.down = pressed;
 					this.aX = ( this.left ? -1 : 0 ) + ( this.right ? 1 : 0 );
-					this.aY = ( this.up ? -1 : 0 ) + ( this.down ? 1 : 0 );
+					this.aY = ( this.up ? 1 : 0 ) + ( this.down ? -1 : 0 );
 					game.autoPilot = false;
 					this.control();
 				}
 				else if ( pressed && e.keyCode === 81 )
 				{
-					gameConnector.Use( 0, 0, 3 );
+					connector.Use( 0, 0, 3 );
 				}
 				else if ( pressed && e.keyCode === 32 )
 				{
@@ -114,7 +114,14 @@ namespace A
 					window.clearTimeout( this.timer );
 					this.timer = 0;
 				}
-				//gameConnector.Control( renderer.mirrored ? -this.aX : this.aX, this.aY );
+				connector.Control( !renderer.orientationRightToLeft && !renderer.orientationPortrait ? this.aX :
+					renderer.orientationRightToLeft && !renderer.orientationPortrait ? -this.aX :
+						!renderer.orientationRightToLeft && renderer.orientationPortrait ? this.aY :
+							-this.aY,
+					!renderer.orientationRightToLeft && !renderer.orientationPortrait ? this.aY :
+						renderer.orientationRightToLeft && !renderer.orientationPortrait ? -this.aY :
+							!renderer.orientationRightToLeft && renderer.orientationPortrait ? -this.aX :
+								this.aX );
 			}
 			else if ( !this.timer )
 				this.timer = window.setTimeout( () =>
@@ -165,8 +172,8 @@ namespace A
 		{
 			if ( e.button === 0 )
 			{
-				// let pos = renderer.getGameCoords( e.clientX, e.clientY );
-				// gameConnector.Use( pos.x, pos.y, 1 );
+				let pos = renderer.getGameCoords( e.clientX, e.clientY );
+				connector.Use( pos.x, pos.y, 1 );
 			}
 			else if ( e.button === 1 )
 			{
@@ -182,8 +189,8 @@ namespace A
 			else if ( e.button === 2 )
 			{
 				e.preventDefault();
-				// let pos = renderer.getGameCoords( e.clientX, e.clientY );
-				// gameConnector.Use( pos.x, pos.y, 2 );
+				let pos = renderer.getGameCoords( e.clientX, e.clientY );
+				connector.Use( pos.x, pos.y, 2 );
 			}
 		}
 
@@ -205,7 +212,7 @@ namespace A
 		{
 			this.setState( { chatInputVisible: false } );
 			if ( cmd === "swap" )
-				gameConnector.SwapTeam();
+				connector.SwapTeam();
 			else if ( cmd === "dbg" )
 				this.setState( { debugVisible: !this.state.debugVisible } );
 		}

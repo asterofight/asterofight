@@ -4,7 +4,7 @@ namespace A
 	{
 		onClick( type: string )
 		{
-			gameConnector.SwitchSpaceship( type );
+			connector.SwitchSpaceship( type );
 			this.props.onClose();
 		}
 

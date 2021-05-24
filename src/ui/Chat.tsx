@@ -22,7 +22,7 @@ namespace A
                 if ( this.state.text[ 0 ] === "/" )
                     cmd = this.state.text.substr( 1 );
                 else
-                    gameConnector.SendChatMessage( 0, this.state.text );
+                    connector.SendChatMessage( 0, this.state.text );
             }
             this.closeInput( cmd );
         }
@@ -35,7 +35,7 @@ namespace A
 
         componentDidMount()
         {
-            gameConnector.addEventListener( "packet", p =>
+            connector.packetEvent.add( p =>
             {
                 let messages = this.state.messages;
                 let dirty = false;
@@ -59,7 +59,7 @@ namespace A
 
         componentWillUnmount()
         {
-            gameConnector.removeAllEventListener( this );
+            connector.packetEvent.removeAll( this );
         }
 
         typeClass = [ "server", "game", "team", "whisper" ];

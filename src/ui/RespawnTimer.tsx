@@ -5,7 +5,7 @@ namespace A
         state = { respawnIn: 0 };
         componentDidMount()
         {
-            gameConnector.addEventListener( "packet", p =>
+            connector.packetEvent.add( p =>
             {
                 let respawnIn = ( game.player?.respawnIn ?? 0 ) * ServerTime.serverTickInterval;
                 if ( this.state.respawnIn !== respawnIn )
@@ -15,7 +15,7 @@ namespace A
 
         componentWillUnmount()
         {
-            gameConnector.removeAllEventListener( this );
+            connector.packetEvent.removeAll( this );
         }
 
         render()

@@ -1,5 +1,5 @@
 ﻿/// <reference path="connector.ts"/>
-/// <reference path="../assetMgr/assetMgr.ts"/>
+/// <reference path="AssetMgr.ts"/>
 /// <reference path="Verlet.ts"/>
 /// <reference path="ServerMotion.ts"/>
 /// <reference path="PidController.ts"/>

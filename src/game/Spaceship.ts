@@ -61,6 +61,23 @@ namespace A
 			}
 		}
 
+		render()
+		{
+			let p = this.serverMotion!.getPositionAt( serverTime.time );
+			p = this.clientMotion!.step( serverTime.renderDelta, this.pid!.step( p.sub( this.clientMotion!.position ), serverTime.renderDelta ) );
+			for ( let a of game.asteroids )
+			{
+				let rr = this.r + a.r;
+				if ( p.distS( a.renderPosition ) < rr * rr )
+				{
+					p = p.sub( a.renderPosition ).norm().mul( rr ).add( a.renderPosition );
+					break;
+				}
+			}
+			this.renderPosition = p;
+			this.ai.setPos( this.renderPosition.x, this.renderPosition.y );
+		}
+
 		draw( resized: boolean )
 		{
 			// if ( this.sprite.texture.baseTexture.valid )

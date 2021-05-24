@@ -29,14 +29,14 @@ namespace A
 
 		async buyUpgrade( id: string )
 		{
-			let credit = await gameConnector.BuyUpgrade( id );
+			let credit = await connector.BuyUpgrade( id );
 			this.user!.currentCredit = credit;
 			this.upgrades!.find( x => x.id === id ).rank++;
 		}
 
 		async sellUpgrade( id: string )
 		{
-			let credit = await gameConnector.SellUpgrade( id );
+			let credit = await connector.SellUpgrade( id );
 			this.user!.currentCredit = credit;
 			this.upgrades!.find( x => x.id === id ).rank--;
 		}

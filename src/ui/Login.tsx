@@ -18,19 +18,19 @@ namespace A
 
 		componentDidMount()
 		{
-			gameConnector.addEventListener( "user", () => this.setState( { loggedIn: userMgr.loggedIn } ), this );
+			connector.userEvent.add( () => this.setState( { loggedIn: userMgr.loggedIn } ), this );
 		}
 
 		componentWillUnmount()
 		{
-			gameConnector.removeAllEventListener( this );
+			connector.userEvent.removeAll( this );
 		}
 
 		proModeChange( checked: boolean )
 		{
 			localStorage[ "proMode" ] = checked.toString();
 			if( !checked)
-				gameConnector.Logout();
+				connector.Logout();
 			this.setState( { proMode: checked } );
 		}
 
@@ -41,14 +41,14 @@ namespace A
 			{
 				if ( this.state.register )
 				{
-					let ret = await gameConnector.Register( this.state.userName, this.state.password, this.state.fullName );
+					let ret = await connector.Register( this.state.userName, this.state.password, this.state.fullName );
 					if ( ret )
 					{
 						this.setState( { errorMessage: ret } );
 						return;
 					}
 				}
-				let ret = await gameConnector.Login( this.state.userName, this.state.password, this.state.stayLoggedIn );
+				let ret = await connector.Login( this.state.userName, this.state.password, this.state.stayLoggedIn );
 				if ( ret )
 				{
 					this.setState( { errorMessage: ret } );
@@ -56,7 +56,7 @@ namespace A
 				}
 			}
 
-			gameConnector.CreatePlayer( this.state.name );
+			connector.CreatePlayer( this.state.name );
 			this.props.onLogin();
 		}
 

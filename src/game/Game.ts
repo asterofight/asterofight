@@ -40,7 +40,7 @@ namespace A
 
 		constructor()
 		{
-			renderer.onRender.add( () => this.onDraw() );
+			renderer.onRender.add( () => this.onRender() );
 		}
 
 
@@ -71,6 +71,11 @@ namespace A
 			serverTime.onPacket( packet.serverTicks );
 			if ( packet.playerId !== undefined )
 				this.playerId = packet.playerId;
+			
+			let ownTeam = this.player?.team ?? 1;
+			renderer.setTeam( ownTeam === 2 );
+
+
 
 			//////////////////////// Players ////////////////////////
 			if ( packet.players )
@@ -171,9 +176,10 @@ namespace A
 		}
 
 
-		onDraw()
+		onRender()
 		{
-			serverTime.onDraw();
+			serverTime.onRender();
+			let visibleAreaCenter = null as Vector2 | null;
 
 			for ( let obj of this.asteroids )
 			{
@@ -185,42 +191,17 @@ namespace A
 			{
 				obj.render();
 				if ( this.controlledObject === obj )
-					this.setVisibleAreaCenter( obj.renderPosition );
+					visibleAreaCenter = obj.renderPosition;
 			}
 			for ( let obj of this.spaceships )
 			{
-				let p = obj.serverMotion!.getPositionAt( serverTime.time );
-				//for ( let a of this.asteroids )
-				//{
-				//	let rr = obj.r + a.r;
-				//	if ( p.distS( a.renderPosition ) < rr * rr )
-				//	{
-				//		p = p.sub( a.renderPosition ).norm().mul( rr ).add( a.renderPosition );
-				//		break;
-				//	}
-				//}
-				p = obj.clientMotion!.step( serverTime.renderDelta, obj.pid!.step( p.sub( obj.clientMotion!.position ), serverTime.renderDelta ) );
-				for ( let a of this.asteroids )
-				{
-					let rr = obj.r + a.r;
-					if ( p.distS( a.renderPosition ) < rr * rr )
-					{
-						p = p.sub( a.renderPosition ).norm().mul( rr ).add( a.renderPosition );
-						break;
-					}
-				}
-				let moveDistance = p.sub( obj.renderPosition ).len;
-				obj.renderPosition = p;
-				//if ( closestAsteroid && obj.renderPosition.distS( closestAsteroid.renderPosition ) < rrMin * rrMin )
-				//	obj.renderPosition = obj.renderPosition.sub( closestAsteroid.renderPosition ).norm().mul( rrMin ).add( closestAsteroid.renderPosition );
+				obj.render();
 				let playerTurret;
 				if ( this.controlledObject === obj && this.player && ( playerTurret = obj.turrets.find( x => x.playerId === this.player!.id ) ) )
 				{
-					this.player.serverPositionHistory.pushShift( p, 240 );
+					visibleAreaCenter = obj.renderPosition.add( playerTurret.pos );
+					this.player.serverPositionHistory.pushShift( obj.renderPosition, 240 );
 					this.player.renderPositionHistory.pushShift( obj.renderPosition, 240 );
-					debug.updateChart( "Move Distance", moveDistance * 100, 0, 100, "u", 200 );
-					let pTurret = obj.renderPosition.add( playerTurret.pos );
-					this.setVisibleAreaCenter( pTurret );
 					if ( this.particleSystems.length === 0 )
 						this.particleSystems.push( new ParticleSystem() );
 					if ( this.inputAcceleration.x !== 0 || this.inputAcceleration.y !== 0 )
@@ -233,7 +214,6 @@ namespace A
 					else
 						this.particleSystems[ 0 ].emitting = false;
 				}
-				obj.render();
 			}
 
 			for ( let obj of this.movingEffects )
@@ -248,12 +228,15 @@ namespace A
 				obj.render();
 			}
 
+			if ( visibleAreaCenter )
+				this.setVisibleAreaCenter( visibleAreaCenter );
 		}
 
 		private setVisibleAreaCenter( pos: Vector2 )
 		{
 			this.visibleArea.x = pos.x - this.visibleArea.w * 0.5;
 			this.visibleArea.y = pos.y - this.visibleArea.h * 0.5;
+			renderer.setCameraTarget( pos );
 		}
 
 		autoPilotControl()

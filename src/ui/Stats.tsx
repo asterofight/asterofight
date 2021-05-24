@@ -6,7 +6,7 @@ namespace A
 
         componentDidMount()
         {
-            gameConnector.addEventListener( "packet", p =>
+            connector.packetEvent.add( p =>
             {
                 if ( game.players && game.players.length > 0 )
                     this.setState( { list: game.players.filter( x => !x.bot || this.props.showDetails ) } );
@@ -15,7 +15,7 @@ namespace A
 
         componentWillUnmount()
         {
-            gameConnector.removeAllEventListener( this );
+            connector.packetEvent.removeAll( this );
         }
 
         render()
