@@ -1,4 +1,4 @@
-/// <reference path="assetInstance.ts"/>
+/// <reference path="AssetObject.ts"/>
 
 namespace A
 {
@@ -9,7 +9,6 @@ namespace A
 
         constructor()
         {
-
         }
 
         createInstance( name: string )

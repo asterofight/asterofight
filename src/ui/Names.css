@@ -1,0 +1,20 @@
+.Names {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    overflow: hidden;
+}
+
+.Names>* {
+    position: absolute;
+    white-space: nowrap;
+    transform: translate(-50%, calc(-40px - 50%));
+}
+
+.Names .foe {
+    color: #ff6857;
+}
+
+.Names .friend {
+    color: #c6eaff;
+}

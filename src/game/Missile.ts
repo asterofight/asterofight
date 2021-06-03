@@ -31,6 +31,12 @@ namespace A
             }
         }
 
+        render()
+        {
+            this.ai.setRotation( this.clientMotion?.velocity.rotation ?? 0 );
+            super.render();
+        }
+
         draw()
         {
             // this.container.setTransform( p.x, p.y, renderer.mirrored ? -1 : 1, 1 );

@@ -9,7 +9,7 @@ namespace A
 	export class Connector
 	{
 
-		address = `${ document.location.protocol === "https:" ? "wss" : "ws" }://${ document.location.port !== "80" && document.location.port !== "443" ? "beta.asterofight.com" : document.location.hostname || "localhost" }/af/game/`;
+		address = `${ document.location.protocol === "https:" ? "wss" : "ws" }://${ document.location.port === "443" ? "beta.asterofight.com" : document.location.hostname || "localhost" }/af/game/`;
 		webSocket: WebSocket | undefined;
 		protocol = "afcp";
 

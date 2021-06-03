@@ -1,6 +1,6 @@
 namespace A
 {
-    
+
     export class Effect extends MapObject
     {
         startTime = 0;
@@ -11,6 +11,8 @@ namespace A
         constructor( od: PacketEffect )
         {
             super( false, od.id, od.type! );
+            if ( od.type === "Explosion" )
+                renderer.flare( new Vector2( od.p!.x, od.p!.y ), od.r! * 2 );
 
             // if ( od.type === "Explosion" )
             // {

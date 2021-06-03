@@ -23,8 +23,8 @@
 		{
 			"label": "Watch TSC and CSS",
 			"dependsOn": [
-				"Watch TSC",
-				"Watch CSS"
+				"Watch CSS",
+				"Watch TSC"
 			],
 			"group": "build",
 			"problemMatcher": [],

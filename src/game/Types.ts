@@ -26,7 +26,7 @@
 		missiles: PacketMissile[];
 		spaceships: PacketSpaceship[];
 		effects: PacketEffect[];
-		movingEffects: PacketMovingEffect[];
+		linkEffects: PacketLinkEffect[];
 		capturePoints: PacketCapturePoint[];
 		players: PacketPlayer[];
 		chatMessage?: PacketChatMessage;
@@ -90,9 +90,13 @@
 		ticksLeft?: number;
 	}
 
-	export interface PacketMovingEffect extends PacketMapObject
+	export interface PacketLinkEffect
 	{
-		v?: PacketPoint;
+		srcId: number;
+		srcPos: PacketPoint;
+		dstId: number;
+		dstPos: PacketPoint;
+		name: string;
 	}
 
 	export interface PacketCapturePoint extends PacketMovingObject

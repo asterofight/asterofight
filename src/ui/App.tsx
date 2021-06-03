@@ -1,3 +1,4 @@
+/// <reference path="Names.tsx"/>
 /// <reference path="NotLoggedInWarning.tsx"/>
 /// <reference path="ShipSelection.tsx"/>
 /// <reference path="Upgrades.tsx"/>
@@ -214,22 +215,36 @@ namespace A
 			if ( cmd === "swap" )
 				connector.SwapTeam();
 			else if ( cmd === "dbg" )
+			{
 				this.setState( { debugVisible: !this.state.debugVisible } );
+			}
+			else if ( cmd === "dbgLayer" )
+			{
+				renderer.showDebug();
+			}
+			else if ( cmd === "pause" )
+			{
+				if ( renderer.isPaused )
+					renderer.start();
+				else
+					renderer.stop();
+			}
 		}
 
 
 		render()
 		{
 			return [
-				this.state.notLoggedInWarningVisible && <NotLoggedInWarning onClose={ () => this.setState( { notLoggedInWarningVisible: false } ) }/>,
-				this.state.upgradesVisible && <Upgrades onClose={ () => this.setState( { upgradesVisible: false } ) }/>,
-				this.state.shipSelectionVisible && <ShipSelection onClose={ () => this.setState( { shipSelectionVisible: false } ) }/>,
-				<Debug showDetails={ this.state.debugVisible }/>,
-				<Stats showDetails={ this.state.statsVisible }/>,
-				<Chat inputVisible={ this.state.chatInputVisible } onCloseInput={ x => this.processCommand( x ) }/>,
-				this.state.joystick && <Joystick coords={ this.state.joystick! }/>,
-				<RespawnTimer/>,
-				this.state.loginVisible && <Login onLogin={ () => this.setState( { loginVisible: false } ) }/>
+				<Names />,
+				this.state.notLoggedInWarningVisible && <NotLoggedInWarning onClose={ () => this.setState( { notLoggedInWarningVisible: false } ) } />,
+				this.state.upgradesVisible && <Upgrades onClose={ () => this.setState( { upgradesVisible: false } ) } />,
+				this.state.shipSelectionVisible && <ShipSelection onClose={ () => this.setState( { shipSelectionVisible: false } ) } />,
+				<Debug showDetails={ this.state.debugVisible } />,
+				<Stats showDetails={ this.state.statsVisible } />,
+				<Chat inputVisible={ this.state.chatInputVisible } onCloseInput={ x => this.processCommand( x ) } />,
+				this.state.joystick && <Joystick coords={ this.state.joystick! } />,
+				<RespawnTimer />,
+				this.state.loginVisible && <Login onLogin={ () => this.setState( { loginVisible: false } ) } />
 			];
 		}
 	}

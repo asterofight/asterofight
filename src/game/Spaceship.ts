@@ -1,4 +1,5 @@
 /// <reference path="Turret.ts"/>
+/// <reference path="HudBar.ts"/>
 
 namespace A
 {
@@ -9,13 +10,17 @@ namespace A
 		maxH = 0;
 		mods = 0;
 		turrets: Turret[];
+		readonly healthBar: HudBar;
 
-		private healthBarIsDirty = true;
-		private damageReductionAssetIsDirty = false;
+		static readonly barColorDisabled = new BABYLON.Color4( .5, .5, .5, 1 );
+		static readonly barColorLowHealth = new BABYLON.Color4( 1, 0x60 / 0xff, 0x20 / 0xff, 1 );
+		static readonly barColorMediumHealth = new BABYLON.Color4( 0xcc / 0xff, 0xcc / 0xff, 0x33 / 0xff, 1 );
+		static readonly barColorHighHealth = new BABYLON.Color4( 0x33 / 0xff, 0xcc / 0xff, 0x33 / 0xff, 1 );
 
 		constructor( od: PacketSpaceship )
 		{
 			super( od.id, od.type! );
+			this.healthBar = new HudBar( this.ai.root, "HealthBar", true, 1 );
 			this.turrets = od.turrets.map( x => new Turret( this ) );
 		}
 
@@ -24,41 +29,54 @@ namespace A
 		destroy()
 		{
 			super.destroy();
+			this.healthBar.destroy();
 			this.turrets.forEach( x => x.destroy() );
 		}
 
 		update( od: PacketSpaceship )
 		{
 			super.update( od );
-			this.healthBarIsDirty = this.healthBarIsDirty || od.h !== undefined;
 			if ( od.h !== undefined )
 				this.h = od.h;
 			if ( od.maxH !== undefined )
 				this.maxH = od.maxH;
-			// if ( od.mods !== undefined )
-			// {
-			// 	if ( ( this.mods & PacketModifiers.Controllable ) !== ( od.mods & PacketModifiers.Controllable ) )
-			// 		this.makeBarsDirty();
-			// 	if ( ( this.mods & PacketModifiers.Targetable ) !== ( od.mods & PacketModifiers.Targetable ) )
-			// 		this.container.alpha = ( od.mods & PacketModifiers.Targetable ) ? 0.5 : 1;
-			// 	if ( ( this.mods & PacketModifiers.Stealth ) !== ( od.mods & PacketModifiers.Stealth ) )
-			// 		this.container.alpha = ( od.mods & PacketModifiers.Stealth ) ? 0.1 : 1;
-			// 	if ( ( this.mods & PacketModifiers.DamageReduction ) !== ( od.mods & PacketModifiers.DamageReduction ) )
-			// 		this.damageReductionAssetIsDirty = true;
-			// 	this.mods = od.mods;
-			// }
+			if ( od.mods !== undefined )
+			{
+				// if ( ( this.mods & PacketModifiers.Targetable ) !== ( od.mods & PacketModifiers.Targetable ) )
+				// 	this.ai.root.getChildMeshes()[ 0 ].visibility = ( od.mods & PacketModifiers.Targetable ) ? 0.75 : 1;
+				// if ( ( this.mods & PacketModifiers.Stealth ) !== ( od.mods & PacketModifiers.Stealth ) )
+				// 	this.ai.root.getChildMeshes()[ 0 ].visibility = ( od.mods & PacketModifiers.Stealth ) ? 0.4 : 1;
+				// if ( ( this.mods & PacketModifiers.DamageReduction ) !== ( od.mods & PacketModifiers.DamageReduction ) )
+				// 	this.damageReductionAssetIsDirty = true;
+				this.mods = od.mods;
+			}
+
+			let mirrorY = ( this.team === 2 ) !== renderer.orientationRightToLeft;
+
 			for ( let i = 0; i < od.turrets.length; i++ )
 				this.turrets[ i ].update( od.turrets[ i ] );
+			if ( od.team )
+				this.onOrientationChanged();
+
+			let barValue = this.h / this.maxH;
+			this.healthBar.mirrorY = mirrorY;
+			this.healthBar.value = barValue;
+			this.healthBar.color = ( this.mods & PacketModifiers.Controllable ) ? Spaceship.barColorDisabled :
+				barValue > .6 ? Spaceship.barColorHighHealth :
+					barValue > .3 ? Spaceship.barColorMediumHealth :
+						Spaceship.barColorLowHealth;
 		}
 
-		private makeBarsDirty()
+		onOrientationChanged()
 		{
-			this.healthBarIsDirty = true;
-			for ( let t of this.turrets )
-			{
-				t.cooldownBarIsDirty = true;
-				t.energyBarIsDirty = true;
-			}
+			this.ai.setRotation( this.team === 2 ? Math.PI : 0 );
+			// let mirror = ( this.team === 2 ) !== renderer.orientationRightToLeft;
+			// this.healthBar.mirrorY = mirror;
+			// for ( let x of this.turrets )
+			// {
+			// 	x.energyBar.mirrorY = mirror;
+			// 	x.cdBar.mirrorY = mirror;
+			// }
 		}
 
 		render()
@@ -76,41 +94,8 @@ namespace A
 			}
 			this.renderPosition = p;
 			this.ai.setPos( this.renderPosition.x, this.renderPosition.y );
+			this.ai.render();
 		}
 
-		draw( resized: boolean )
-		{
-			// if ( this.sprite.texture.baseTexture.valid )
-			// {
-			// 	let tw = this.sprite.texture.width;
-			// 	let th = this.sprite.texture.height;
-			// 	let s = r * 2;
-			// 	this.sprite.setTransform( 0, 0, s / tw, s / th, 0, 0, 0, tw / 2, th / 2 );
-			// }
-			// this.container.scale.x = ( this.team === game.team ) ? 1 : -1;
-
-			// if ( this.healthBarIsDirty || resized )
-			// {
-			// 	this.healthBarIsDirty = false;
-			// 	this.healthBar.clear();
-			// 	this.healthBar.lineStyle( 3, ( this.mods & PacketModifiers.Controllable ) ? 0x808080 : this.h > 60 ? 0x33CC33 : this.h > 30 ? 0xCCCC33 : 0xFF6020, 1 );
-			// 	let eLen = Math.PI * 2 / 3;
-			// 	this.healthBar.arc( 0, 0, r * 1.5, Math.PI - eLen / 2, Math.PI - eLen / 2 + eLen * this.h / this.maxH );
-			// }
-
-			// if ( this.damageReductionAssetIsDirty || resized )
-			// {
-			// 	this.damageReductionAssetIsDirty = false;
-			// 	this.damageReductionAsset.clear();
-			// 	if ( this.mods & PacketModifiers.DamageReduction )
-			// 	{
-			// 		this.damageReductionAsset.lineStyle( 3, 0x0080ff, 0.25 );
-			// 		this.damageReductionAsset.drawCircle( 0, 0, r * 1.1 );
-			// 	}
-			// }
-
-			for ( let turret of this.turrets )
-				turret.draw( resized );
-		}
 	}
 }

@@ -25,19 +25,21 @@ namespace A
 			packet.id = this.packetId = dvr.readVarInt();
 			packet.serverTicks = dvr.readVarInt();
 
-			let generalFlags = dvr.readBitArray( 4 );
+			let generalFlags = dvr.readBitArray( 6 );
 			let flagIndex = 0;
 			if ( generalFlags.getBit( flagIndex++ ) ) packet.playerId = dvr.readVarInt();
 			if ( generalFlags.getBit( flagIndex++ ) ) packet.controlledObjId = dvr.readVarInt();
 			if ( generalFlags.getBit( flagIndex++ ) ) packet.team = dvr.readByte();
 
-			packet.asteroids = this.readArray( dvr, () => this.readAsteroid( dvr ) );
+			if ( generalFlags.getBit( flagIndex++ ) )
+				packet.asteroids = this.readArray( dvr, () => this.readAsteroid( dvr ) );
 			packet.missiles = this.readArray( dvr, () => this.readMissile( dvr ) );
 			packet.spaceships = this.readArray( dvr, () => this.readSpaceship( dvr ) );
 			packet.effects = this.readArray( dvr, () => this.readEffect( dvr ) );
-			packet.movingEffects = this.readArray( dvr, () => this.readMovingEffect( dvr ) );
+			packet.linkEffects = this.readArray( dvr, () => this.readLinkEffect( dvr ) );
 			packet.capturePoints = this.readArray( dvr, () => this.readCapturePoint( dvr ) );
-			packet.players = this.readArray( dvr, () => this.readPlayer( dvr ) );
+			if ( generalFlags.getBit( flagIndex++ ) )
+				packet.players = this.readArray( dvr, () => this.readPlayer( dvr ) );
 			if ( generalFlags.getBit( flagIndex++ ) ) packet.chatMessage = this.readChat( dvr );
 
 			for ( let id in this.objectCache )
@@ -168,17 +170,15 @@ namespace A
 			return ret;
 		}
 
-		private readMovingEffect( dvr: DataViewReader )
+		private readLinkEffect( dvr: DataViewReader )
 		{
-			let id = dvr.readVarInt();
-			let flags = dvr.readBitArray( 4 );
-			let ret = { id } as PacketMovingEffect;
-			let flagIndex = 0;
-			if ( flags.getBit( flagIndex++ ) ) ret.type = dvr.readInternedString();
-			if ( flags.getBit( flagIndex++ ) ) ret.p = this.readPointCentiUnit16( dvr );
-			if ( flags.getBit( flagIndex++ ) ) ret.r = this.readNumberCentiUnit16( dvr )
-			if ( flags.getBit( flagIndex++ ) ) ret.v = this.readPointCentiUnit16( dvr );
-			return ret;
+			return {
+				srcId: dvr.readVarInt(),
+				dstId: dvr.readVarInt(),
+				srcPos: this.readPointCentiUnit16( dvr ),
+				dstPos: this.readPointCentiUnit16( dvr ),
+				name: dvr.readInternedString()
+			} as PacketLinkEffect;
 		}
 
 		private readCapturePoint( dvr: DataViewReader )

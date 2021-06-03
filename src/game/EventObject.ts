@@ -22,10 +22,10 @@ namespace A
 			this.listeners = this.listeners.filter( x => x.scope !== scope );
 		}
 
-		raise( arg: T )
+		raise( arg?: T )
 		{
 			for ( let listener of this.listeners )
-				listener.callback.call( listener.scope, arg );
+				listener.callback.call( listener.scope, arg! );
 		}
 	}
 

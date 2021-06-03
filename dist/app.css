@@ -232,6 +232,10 @@ a {
   color: #00A1C9;
 }
 
+#embed-host {
+  left: 0;
+}
+
 
 .chat {
     
@@ -304,6 +308,7 @@ a {
     display: inline-block;
     position: absolute;
     right: 0;
+    min-width: 250px;
     font-size: 13px;
     overflow: hidden;
     padding: 10px;
@@ -419,6 +424,26 @@ a {
 
 .menu .menuitem:hover {
     background-color: #005566;
+}
+.Names {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    overflow: hidden;
+}
+
+.Names>* {
+    position: absolute;
+    white-space: nowrap;
+    transform: translate(-50%, calc(-40px - 50%));
+}
+
+.Names .foe {
+    color: #ff6857;
+}
+
+.Names .friend {
+    color: #c6eaff;
 }
 .notLoggedInWarning {
     width: 400px;

@@ -2,7 +2,7 @@
 /// <reference path="Map.ts"/>
 /// <reference path="Asteroid.ts"/>
 /// <reference path="Effect.ts"/>
-/// <reference path="MovingEffect.ts"/>
+/// <reference path="LinkEffect.ts"/>
 /// <reference path="ParticleSystem.ts"/>
 /// <reference path="CapturePoint.ts"/>
 /// <reference path="Missile.ts"/>
@@ -25,7 +25,7 @@ namespace A
 		player?: Player;
 		asteroids: Asteroid[] = [];
 		effects: Effect[] = [];
-		movingEffects: MovingEffect[] = [];
+		linkEffects: LinkEffect[] = [];
 		particleSystems: ParticleSystem[] = [];
 		capturePoints: CapturePoint[] = [];
 		missiles: Missile[] = [];
@@ -41,6 +41,7 @@ namespace A
 		constructor()
 		{
 			renderer.onRender.add( () => this.onRender() );
+			renderer.onOrientationChanged.add( () => this.onOrientationChanged() );
 		}
 
 
@@ -96,15 +97,18 @@ namespace A
 			this.controlledObject = undefined;
 
 			//////////////////////// Asteroids ////////////////////////
-			for ( let od of packet.asteroids )
+			if ( packet.asteroids )
 			{
-				let obj = this.getOrCreateObject( this.asteroids, od.id, () => new Asteroid( od ) );
-				obj.update( od );
+				for ( let od of packet.asteroids )
+				{
+					let obj = this.getOrCreateObject( this.asteroids, od.id, () => new Asteroid( od ) );
+					obj.update( od );
+				}
+				for ( let obj of this.asteroids )
+					if ( obj.lastSeenPacketId !== packet.id )
+						obj.destroy();
+				this.asteroids.removeAll( obj => obj.lastSeenPacketId !== packet.id );
 			}
-			for ( let obj of this.asteroids )
-				if ( obj.lastSeenPacketId !== packet.id )
-					obj.destroy();
-			this.asteroids.removeAll( obj => obj.lastSeenPacketId !== packet.id );
 
 			//////////////////////// CapturePoints ////////////////////////
 			for ( let od of packet.capturePoints )
@@ -159,16 +163,18 @@ namespace A
 					obj.destroy();
 			this.effects = this.effects.filter( obj => obj.lastSeenPacketId === packet.id );
 
-			//////////////////////// MovingEffects ////////////////////////
-			for ( let od of packet.movingEffects )
+			//////////////////////// LinkEffects ////////////////////////
+			for ( let od of packet.linkEffects )
 			{
-				let obj = this.getOrCreateObject( this.movingEffects, od.id, () => new MovingEffect( od ) );
+				let obj = this.linkEffects.find( x => x.srcId === od.srcId && x.dstId === od.dstId );
+				if ( !obj )
+					this.linkEffects.push( obj = new LinkEffect( od ) );
 				obj.update( od );
 			}
-			for ( let obj of this.movingEffects )
+			for ( let obj of this.linkEffects )
 				if ( obj.lastSeenPacketId !== packet.id )
 					obj.destroy();
-			this.movingEffects = this.movingEffects.filter( obj => obj.lastSeenPacketId === packet.id );
+			this.linkEffects = this.linkEffects.filter( obj => obj.lastSeenPacketId === packet.id );
 
 
 			if ( this.autoPilot )
@@ -216,21 +222,22 @@ namespace A
 				}
 			}
 
-			for ( let obj of this.movingEffects )
-			{
-				let p = obj.serverMotion!.getPositionAt( serverTime.time );
-				obj.renderPosition = obj.clientMotion!.step( 1 / 60, obj.pid!.step( p.sub( obj.clientMotion!.position ), 1 / 60 ) );
-				obj.render();
-			}
-
 			for ( let obj of this.effects )
-			{
 				obj.render();
-			}
+
+			for ( let obj of this.linkEffects )
+				obj.render();
 
 			if ( visibleAreaCenter )
 				this.setVisibleAreaCenter( visibleAreaCenter );
 		}
+
+		onOrientationChanged()
+		{
+			for ( let obj of this.spaceships )
+				obj.onOrientationChanged();
+		}
+
 
 		private setVisibleAreaCenter( pos: Vector2 )
 		{

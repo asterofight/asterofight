@@ -17,6 +17,7 @@
 		norm() { let f = 1 / this.len; return new Vector2( this.x * f, this.y * f ); }
 		clone() { return new Vector2( this.x, this.y ); }
 		clamp( len: number ) { let lenS = this.lenS; return lenS <= len * len ? this : this.mul( len / Math.sqrt( lenS ) ); }
+		rot90( ) { return new Vector2( -this.y, this.x ); }
 
 		setCoords( x: number, y: number ) { this.x = x; this.y = y; return this; }
 

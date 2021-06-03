@@ -1,4 +1,3 @@
-
 body {
   margin: 0;
   font-family: 'Segoe UI', 'Gill Sans', 'Gill Sans MT', 'Trebuchet MS', sans-serif;
@@ -88,4 +87,8 @@ button:focus {
 
 a {
   color: #00A1C9;
+}
+
+#embed-host {
+  left: 0;
 }

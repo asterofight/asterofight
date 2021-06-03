@@ -44,9 +44,12 @@ namespace A
 			this.ai.setUniformScale( this.r * 2 );
 		}
 
+		onOrientationChanged() { }
+
 		render()
 		{
 			this.ai.setPos( this.renderPosition.x, this.renderPosition.y );
+			this.ai.render();
 		}
 	}
 
